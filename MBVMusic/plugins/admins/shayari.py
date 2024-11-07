@@ -1,0 +1,180 @@
+from MBVMusic import app 
+import asyncio
+import random
+from pyrogram import Client, filters
+from pyrogram.enums import ChatType, ChatMemberStatus
+from pyrogram.errors import UserNotParticipant
+from pyrogram.types import ChatPermissions
+
+spam_chats = []
+
+EMOJI = [ "??????????",
+          "???М╕???Нм??",
+          "???М╖?М╣?М║??",
+          "?М╕?М┐?То?М▒?М╡",
+          "?дя????????Цд",
+          "??????????",
+          "?М╕???М║?М╣??",
+          "???жк???Н▓??",
+          "?????????М╢я╕?,
+          "???ед?????Н╖",
+          "?Нм?Нн?????Нб",
+          "?Ни???Н║?ХЁ??,
+          "?ек?ез?Нж?Не??",
+          "???ХЁ?╣Ё?╖ЁЯе?,
+          "?ХЁЯзГЁ?йЁ?жЁ??,
+          "???М╛?То???М┐",
+          "?Мия╕ПЁ?ея??Ия??Мйя╕ПЁ?зя?",
+          "?М╖?П╡я╕ПЁ?╕Ё?║Ё??,
+          "?То?М╝?М╗????",
+          "???ж╕?ж╣???С╕",
+          "???????М╜?еж",
+          "?Р╖?Р╣?Рн?Ри?Р╗?Нт?я╕?,
+          "???????????Нт?",
+          "?М╝?М│?М▓?М┤?М╡",
+          "?ей????????",
+          "?Н┤?Н╜я╕ПЁ?кЁ?╢ЁЯе?,
+          "???П░?Пй?йя??Пй",
+          "??????????",
+          "?к┤?М╡?М┤?М│?М▓",
+          "??????????",
+          "??????я╕ПЁЯждЁЯж?,
+          "?жд?жй??????",
+          "?Рм?жн?????Р│",
+          "???????Рб??",
+          "?жй???????жк",
+          "?Рж???Х╖я╕ПЁ?╕я???",
+          "?ек?Н░?ез?Ни?Ни",
+          " ?ем??????",
+        ]
+        ####
+        
+SHAYRI = [ " ?М║**рдмрд╣реБрдд рдЕр?реНр?рд?рд▓р?рддрд╛ рд╣р? рддр?рдЭр? рд╕рддрд╛рдирд?рдФрд░ рдлрд┐рд?рдкр?рдпрд╛рд?рд╕р? рддр?рдЭр? рдордирд╛рдирд╛ред**?М║ \n\n**??Bahut aacha lagta hai tujhe satana Aur fir pyar se tujhe manana.??** ",
+           " ?М║**рдор?рд░р? рдЬрд┐рдВрджрдЧр? рдор?рд░р? рдЬрд╛рд?рд╣р? рддр?рд?рдор?рд░р? рд╕р?рдХр?рд?рдХрд╛ рджр?рд╕рд░рд?рдирд╛рд?рд╣р? рддр?рдоред**?М║ \n\n**??Meri zindagi Meri jaan ho tum Mere sukoon ka Dusra naam ho tum.??** ",
+           " ?М║**рддр?рд?рдор?рд░р? рд╡р? рдЦр?рд╢р? рд╣р? рдЬрд┐рд╕р?ре?рдмрд┐рдирд╛, рдор?рд░р? рд╕рд╛рд░р? рдЦр?рд╢р? рдЕрдзреВрд░реА рд▓р?рддр? рд╣р?ре?*?М║ \n\n**??**Tum Meri Wo Khushi Ho Jiske Bina, Meri Saari Khushi Adhuri Lagti Ha.??** ",
+           " ?М║**рдХрд╛рд?рд╡р? рджрд┐рд?рдЬрд▓реНрджреА рдЖр?,рдЬрдм рддр? рдор?рд░р? рд╕рд╛рд?рд╕рд╛рд?рдлр?рд░р? рдор?рд?рдмрдиреНрдз рдЬрд╛рдПред**?М║ \n\n**??Kash woh din jldi aaye Jb tu mere sath 7 feron me bndh jaye.??** ",
+           " ?М║**рдЕрдкрдирд╛ рд╣рд╛рд?рдор?рд░р? рджрд┐рд?рдкрд░ рд░р? рджр? рдФрд░ рдЕрдкрдирд╛ рджрд┐рд?рдор?рд░р? рдирд╛рд?рдХрд░ рджр?ре?*?М║ \n\n**??apna hath mere dil pr rakh do aur apna dil mere naam kar do.??** ",
+           " ?М║**рдорд╣рд╛рджреЗрд╡ рдирд╛ рдХр?рд?рдЧрд╛рдбрд╝реА рдирд╛ рдХр?рд?рдмр?рдЧрд▓рд?рдЪрд╛рд╣рд┐рд?рд╕рд▓рд╛рдорд?рд░рд╣ре?рдор?рд░рд╛ рдкр?рдпрд╛рд?рдмрд╕ рдпрд╣реА рджр?рд?рдЪрд╛рд╣рд┐рдПред**?М║ \n\n**??Mahadev na koi gadi na koi bangla chahiye salamat rhe mera pyar bas yahi dua chahiye.??** ",
+           " ?М║**рдлрд┐рдХр?рд?рддр? рд╣р?рдЧр? рдирд╛ рддр?рдор?рд╣рд╛рд░р? рдЗр?рд▓р?рддр? рдор?рд╣рдмреНрдмрд?рд╣р? рддр?рд?рдор?рд░р?ре?*?М║ \n\n**??Fikr to hogi na tumhari ikloti mohabbat ho tum meri.??** ",
+           " ?М║**рд╕р?рдир? рдЬрд╛рдир? рдЖрдк рд╕рд┐рд░р?рд?рдХрд┐рдЪрди рд╕р?рднрд╛рд?рд▓р?рдирд╛ рдЖрдк рдХр? рд╕р?рднрд╛рд▓рдире?рдХр? рд▓рд┐рд?рдор?рд?рд╣р?рд?рдирд╛ре?*?М║ \n\n**??suno jaanu aap sirf kitchen sambhal lena ap ko sambhlne ke liye me hun naa.??** ",
+           " ?М║**рд╕р? рдмрд╛рд?рдХр? рдПр? рдмрд╛рд?рдор?рдЭр? рдЪрд╛рд╣рд┐рд?рдмрд╕ рддр?рд░рд╛ рд╕рд╛рдеред**?М║ \n\n**??So bat ki ek bat mujhe chahiye bas tera sath.??** ",
+           " ?М║**рдмрд╣реБрдд рдор?рд╢р?рдХрд┐рд▓р?рд?рд╕р? рдкрд╛рдпрд╛ рд╣р?рд?рддр?рдор?рд╣р?рд? рдЕрдм рдЦр?рдирд╛ рдирд╣реАрд?рдЪрд╛рд╣рддре?рдХрд┐ рддр?рдор?рд╣рд╛рд░р? рдер? рддр?рдор?рд╣рд╛рд░р? рд╣р?рд?рдЕрдм рдХрд┐рд╕р? рдФрд░ рдХр? рд╣р?рдирд╛ рдирд╣реАрд?рдЪрд╛рд╣рддреЗред**?М║ \n\n**??Bahut muskilon se paya hai tumhe Ab khona ni chahte ki tumhare they tumhare hai ab kisi or k hona nhi chahte.??** ",
+           " ?М║**рдмр?рдмр? рдмрд╛рддр?рд?рддр? рд░р?рд?рдХрд░рддр? рд╣р? рдЪрд▓ре?рдЖр? рд░р?рдорд╛рдВрд╕ рдХрд░рддр? рд╣р?ре?*?М║ \n\n**??Baby baten to roj karte haichalo aaj romance karte hai..??** ",
+           " ?М║**рд╕р?рдмрд╣ рд╢рд╛рд?рддр?рдЭр? рдпрд╛рд?рдХрд░рддр? рд╣р? рд╣рдо рдФрд░ рдХр?рдпрд╛ рдмрддрд╛р?рд?рдХр? рддр?рдорд╕ре?рдХрд┐рддрдирд?рдкр?рдпрд╛рд?рдХрд░рддр? рд╣р? рд╣рдоре?*?М║ \n\n**??subha sham tujhe yad karte hai hum aur kya batayen ki tumse kitna pyar karte hai hum.??** ",
+           " ?М║**рдХрд┐рд╕р? рд╕р? рджрд┐рд?рд▓р? рдЬрд╛рдир? рдХр? рдор?рд╣рдмреНрдмрд?рдирд╣реАрд?рдХрд╣рддр? рдЬрд┐рд╕р?ре?рдмрд┐рдирд╛ рджрд┐рд?рд?рд▓р?ре?рдЙрд╕ре?рдор?рд╣рдмреНрдмрд?рдХрд╣рддр? рд╣р?рдВред**?М║ \n\n**??Kisi se dil lag jane ko mohabbat nahi kehte jiske nina dil na lage use mohabbat kehte hai.??** ",
+           " ?М║**рдор?рд░р? рджрд┐рд?рдХр? рд▓р?рд?рдХр? рдЪрд╛рдмр? рд╣р? рддр?рд?рдХр?рдпрд╛ рдмрддрд╛р?рд?рдЬрд╛рд?рдор?рд░р? рдЬр?рдир? рдХр? рдПр?рд▓р?рддр? рд╡р?рд?рд╣р? рддр?рдоред**?М║ \n\n**??mere dil ke lock ki chabi ho tum kya batayen jaan mere jeene ki eklauti wajah ho tum..??** ",
+           " ?М║**рд╣рдо рдЖрдкрдХр? рд╣рд░ рдЪр?ре?рд╕р? рдкр?рдпрд╛рд?рдХрд░ рд▓р?рдВр?ре? рдЖрдкрдХр? рд╣рд░ рдмрд╛рд?рдкрд░ рдРрддрдмрд╛рд?рдХрд░ рд▓р?рдВр?ре? рдмрд╕ рдПр? рдмрд╛рд?рдХрд╣ рджр? рдХрд┐ рддр?рд?рд╕рд┐рд░р?рд?рдор?рд░р? рд╣р?, рд╣рдо реЫрд┐рдир?рджр?реА рднрд░ рдЖрдкрдХрд╛ рдЗр?рддр?рд╛рд░ рдХрд░ рд▓р?рдВр?реЗред**?М║ \n\n**??Hum apki har cheez se pyar kar lenge apki har baat par etvar kar lenge bas ek bar keh do ki tum sirf mere ho hum zindagi bhar apka intzaar kar lenge..??** ",
+           " ?М║**рдор?рд╣рдмреНрдмрд?рдХрднреА рд╕р?рдкр?рд╢рд▓ рд▓р?рдЧр? рд╕р? рдирд╣реАрд?рд╣р?рддр? рдЬрд┐рд╕рд╕ре?рд╣р?рддр? рд╣р? рд╡рд╣реА рд╕р?рдкр?рд╢рд▓ рдмрди рдЬрд╛рддрд╛ рд╣р?ре?*?М║ \n\n**??Mohabbat kabhi special logo se nahi hoti jisse bhi hoti hai wahi special ban jate hai,.??**",
+           " ?М║**рддр? рдор?рд░р? рдЬрд╛рд?рд╣р? рдЗрд╕рдор?рд?рдХр?рд?рд╢р? рдирд╣реАрд?рддр?рд░р? рдЕрд▓рд╛рд╡рд?рдор?рд?рдкрд░ рдХрд┐рд╕р? рдФрд░ рдХрд╛ рд╣р? рдирд╣реАрдВред**?М║ \n\n**??Tu meri jaan hai isme koi shak nahi tere alawa mujhe par kisi aur ka hak nhi..??** ",
+           " ?М║**рдкрд╣рд▓р? рдор?рд╣рдмреНрдмрд?рдор?рд░р? рд╣рдо рдЬрд╛рд?рд?рд╕р?ре? рдкр?рдпрд╛рд?рдХр?рдпрд╛ рд╣р?рддрд╛ рд╣р? рд╣рдо рдкрд╣рдЪрд╛рд?рд?рд╕р?ре? рд╣рдордир? рдЙрдиреНрд╣реЗр? рджрд┐рд?рдор?рд?рдмрд╕рд?рд▓рд┐рдпрд╛ рдЗрд╕ рдХрджрд?рдХрд┐, рдЬрдм рдЪрд╛рд╣рд╛ рдЙрдиреНрд╣реЗр? рджрд┐рд?рд╕р? рдирд┐рдХрд╛рд?рд?рд╕р?реЗред**?М║ \n\n**??Pehli mohabbat meri hum jaan na sake pyar kya hota hai hum pehchan na sake humne unhe dil me basa liya is kadar ki jab chaha unhe dil se nikal na sake.??** ",
+           " ?М║**рдЦр?рд?рдирд╣реАрд?рдЬрд╛рдирддреА рд╡р? рдХрд┐рддрдиреА рдкр?рдпрд╛рд░р? рд╣р?рд?, рдЬрд╛рд?рд╣р? рд╣рдорд╛рд░реА рдкрд░ рдЬрд╛рд?рд╕р? рдкр?рдпрд╛рд░р? рд╣р?рд? рджр?рд░рд┐рдпр?рд?рдХр? рд╣р?рдир? рд╕р? рдХр?рд?рдлрд░реНр? рдирд╣реАрд?рдкр?рддрд╛ рд╡р? рдХрд▓ рднр? рд╣рдорд╛рд░реА рдер? рдФрд░ рдЖр? рднр? рд╣рдорд╛рд░реА рд╣р?.**?М║ \n\n**??khud nahi janti vo kitni pyari hai jan hai hamari par jan se jyda payari hai duriya ke hone se frak nahi pdta vo kal bhe hamari the or aaj bhe hamari hai.??** ",
+           " ?М║**рдЪр?рдкр?ре?рд╕р? рдЖр?рд?рдЗрд╕ рджрд┐рд?рдор?рд?рдЙрддрд?рдЬрд╛рддр? рд╣р?, рд╕рд╛рдВрд╕реЛр? рдор?рд?рдор?рд░р? рдЦр?рд╢рдмре?рдмрдирдХр? рдмрд┐рдЦрд░ рдЬрд╛рддр? рд╣р?, рдХр?рд?рдпр?рд?рдЪрд▓рд?рд╣р? рддр?рд░р? рдЗрд╢реНр? рдХрд╛ рдЬрд╛рджр?, рд╕р?рддр?-рдЬрд╛рдЧрддре?рддр?рд?рд╣р? рддр?рд?рдир?рд╝рд░ рдЖрддре?рд╣р?ре?*?М║ \n\n**??Chupke Se Aakar Iss Dil Mein Utar Jate Ho, Saanso Mein Meri Khushbu BanKe Bikhar Jate Ho,Kuchh Yun Chala Hai Tere Ishq Ka Jadoo, Sote-Jagte Tum Hi Tum Najar Aate Ho..??** ",
+           " ?М║**рдкр?рдпрд╛рд?рдХрд░рдирд╛ рд╕рд┐рдЦрд╛ рд╣р? рдирдлрд░рддре?рдХрд╛ рдХр?рд?рдар?рд?рдирд╣реА, рдмрд╕ рддр? рд╣р? рддр? рд╣р? рдЗрд╕ рджрд┐рд?рдор? рджр?рд╕рд░рд?рдХр?рд?рдФрд░ рдирд╣реА.**?М║ \n\n**??Pyar karna sikha hai naftaro ka koi thor nahi bas tu hi tu hai is dil me dusra koi aur nahi hai.??** ",
+           " ?М║**рд░рдм рд╕р? рдЖрдкрдХр? рдЦр?рд╢р?рдпрд╛рд?рдорд╛рдВр?рддр? рд╣р?, рджр?рдЖр?рд?рдор?рд?рдЖрдкрдХр? рд╣р?рд╕р? рдорд╛рдВр?рддр? рд╣р?, рд╕р?рдЪрддре?рд╣р? рдЖрдкрд╕р? рдХр?рдпрд╛ рдорд╛рдВр?ре?рдЪрд▓ре?рдЖрдкрд╕р? рдЙрдореНрд░ рднрд░ рдХр? рдор?рд╣рдмреНрдмрд?рдорд╛рдВр?рддр? рд╣р?ре?*?М║\n\n**??Rab se apki khushiyan mangte hai duao me apki hansi mangte hai sochte hai apse kya mange chalo apse umar bhar ki mohabbat mangte hai..??** ",
+           " ?М║**рдХрд╛рд?рдор?рд░р? рд╣р?рдВр? рддр?рд░р? рд╣р?рдВр?реЛр? рдХр? рдЫр? рдЬрд╛рд?рджр?рдЦр?рд?рдЬрд╣рд?рдмрд╕ рддр?рд░рд╛ рд╣р? рдЪр?рд╣рд░рд?рдир?рд?рдЖр? рд╣р? рдЬрд╛рд?рд╣рдорд╛рд░рд?рд░рд┐рд╢р?рддрд╛ рдХр?рд?рдРрд╕рд?рд╣р?рдВр?реЛр? рдХр? рд╕рд╛рд?рд╣рдорд╛рд░ре?рджрд┐рд?рднр? рдЬр?ре?рдЬрд╛рд?**?М║\n\n**??kash mere hoth tere hontho ko chu jayen dekhun jaha bas teri hi chehra nazar aaye ho jayen humara rishta kuch easa hothon ke sath humare dil bhi jud jaye.??** ",
+           " ?М║**рдЖр? рдор?рдЭр? рдпр? рдмрддрд╛рдире?рдХр? рдЗр?рд╛р?рд╝рдд рджр? рджр?, рдЖр? рдор?рдЭр? рдпр? рд╢рд╛рд?рд╕р?рд╛рдире?рдХр? рдЗр?рд╛р?рд╝рдд рджр? рджр?, рдЕрдкрдир? рдЗрд╢реНр?рд?рдор? рдор?рдЭр? рдХрд╝реИрдж рдХрд░ рд▓р?,рдЖр? рдЬрд╛рд?рддр?рд?рдкрд░ рд▓р?рдЯрд╛рдир? рдХр? рдЗр?рд╛р?рд╝рдд рджр? рджр?.**?М║\n\n**??Aaj mujhe ye batane ki izazat de do, aaj mujhe ye sham sajane ki izazat de do, apne ishq me mujhe ked kr lo aaj jaan tum par lutane ki izazat de do..??** ",
+           " ?М║**рдЬрд╛рдир? рд▓р?рд?рдор?рд╣рдмреНрдмрд?рдХр? рдХр?рдпрд╛ рдХр?рдпрд╛ рдирд╛рд?рджр?рддр? рд╣р?, рд╣рдо рддр? рддр?рд░р? рдирд╛рд?рдХр? рд╣р? рдор?рд╣рдмреНрдмрд?рдХрд╣рддр? рд╣р?.**?М║\n\n**??Jane log mohabbat ko kya kya naam dete hai hum to tere naam ko hi mohabbat kehte hai..??** ",
+           " ?М║**рджр?рд?рдХр? рд╣рдореЗр? рд╡р? рд╕рд┐рд?рдЭр?рдХрд╛рддр? рд╣р?рдВред рдмр?рд▓рд╛ рдХр? рдорд╣рдлрд┐рд?рдор?рд?рдир?рд?рдЪр?рд░рд╛рддр? рд╣р?рдВред рдирдлрд░рдд рд╣р?рд?рд╣рдорд╕р? рддр? рднр? рдХр?рд?рдмрд╛рд?рдирд╣реАрдВред рдкрд░ рдЧр?рд░р? рд╕р? рдорд┐рд?рдХр? рджрд┐рд?рдХр?рдпр?рд?рдЬрд▓рд╛рддре?рд╣р?ре?*?М║\n\n**??Dekh Ke Hame Wo Sir Jhukate Hai Bula Ke Mahfhil Me Najar Churate Hai Nafrat Hai Hamse To Bhi Koei Bat Nhi Par Gairo Se Mil Ke Dil Kyo Jalate Ho.??** ",
+           " ?М║**рддр?рд░р? рдмрд┐рдирд╛ рдЯр?рд?рдХрд░ рдмрд┐рдЦрд░ рдЬрд╛рдпр?рдВр?ре?рддр?рд?рдорд┐рд?рдЧр? рддр? рдЧр?рд▓рд╢рд?рдХр? рддрд░рд?рдЦрд┐рд?рдЬрд╛рдпр?рдВр?ре? рддр?рд?рдирд╛ рдорд┐рд▓р? рддр? рдЬр?рддр? рдЬр? рд╣р? рдорд░ рдЬрд╛рдпр?рдВр?ре? рддр?рдор?рд╣р?рд?рдЬр? рдкрд╛ рд▓рд┐рдпрд╛ рддр? рдорд░ рдХрд░ рднр? рдЬр? рдЬрд╛рдпр?рдВр?реЗред**?М║\n\n**??Tere bina tut kar bikhar jeynge tum mil gaye to gulshan ki tarha khil jayenge tum na mile to jite ji hi mar jayenge tumhe jo pa liya to mar kar bhi ji jayenge..??** ",
+           " ?М║**рд╕рдирд?рддр?рд░р? рдХрд╕рд?рдЬр?рд╕р? рдор? рдЬрд░реВрд░реА рд╣р?рд?рддр?рд░р? рдЦрд╝реБрд╢реА рдХр? рд▓рд┐рдпр?, рддр? рдЬрд░реВрд░реА рд╣р? рдор?рд░р? рдЬрд┐рдВрджрдЧр? рдХр? рд▓рд┐рдпр?.**?М║\n\n**??Sanam teri kasam jese me zaruri hun teri khushi ke liye tu zaruri hai meri zindagi ke liye.??** ",
+           " ?М║**рддр?рдор?рд╣рд╛рд░р? рдЧр?рд╕р?рд╕р? рдкрд░ рдор?рдЭр? рдмр?рд?рдкр?рдпрд╛рд?рдЖрдпрд?рд╣р?рд?рдЗрд╕ рдмр?рджрд░реНрдж рджр?рдирд┐рдпрд╛ рдор?рд?рдХр?рд?рддр? рд╣р?рд?рдЬрд┐рд╕рдире?рдор?рдЭр? рдкр?рд░р? рд╣р?реНр? рд╕р? рдзрдордХрд╛рдпрд╛ рд╣р?рд?**?М║\n\n**??Tumharfe gusse par mujhe pyar aaya hai is bedard duniya me koi to hai jisne mujhe pure hakk se dhamkaya hai.??** ",
+           " ?М║**рдкрд▓рдХр? рд╕р? рдЖр?рдЦр? рдХр? рд╣рд┐рдлрд╛рдЬрдд рд╣р?рддр? рд╣р? рдзрдбрдХрди рджрд┐рд?рдХр? рдЕрдорд╛рдирд?рд╣р?рддр? рд╣р? рдпр? рд░рд┐рд╢р?рддрд╛ рднр? рдмрдбрд?рдкр?рдпрд╛рд░рд╛ рд╣р?рддрд╛ рд╣р? рдХрднреА рдЪрд╛рд╣рдд рддр? рдХрднреА рд╢рд┐рдХрд╛рдпрдд рд╣р?рддр? рд╣р?.**?М║\n\n**??Palkon se Aankho ki hifajat hoti hai dhakad dil ki Aamanat hoti hai, ye rishta bhi bada pyara hota hai, kabhi chahat to kabhi shikayat hoti hai.??** ",
+           " ?М║**рдор?рд╣рдмреНрдмрд?рдХр? рдЬрдм рд▓р?рд?рдЦр?рджрд╛ рдорд╛рдирддре?рд╣р?рд?рдкр?рдпрд╛рд?рдХрд░рдир? рд╡рд╛рд▓р? рдХр? рдХр?рдпр?рд?рдмр?рд░рд╛ рдорд╛рдирддре?рд╣р?рдВред рдЬрдм рдЬрдорд╛рдирд?рд╣р? рдкрддреНрдерд?рджрд┐рд?рд╣р?рдВред рдлрд┐рд?рдкрддреНрдерд?рд╕р? рд▓р?рд?рдХр?рдпр?рд?рджр?рд?рдорд╛рдВр?рддр? рд╣р?ре?*?М║\n\n**??Muhabbt Ko Hab Log Khuda Mante Hai, Payar Karne Walo Ko Kyu Bura Mante Hai,Jab Jamana Hi Patthr Dil Hai,Fhir Patthr Se Log Kyu Duaa Magte Hai.??** ",
+           " ?М║**рд╣р?рд?рдЬрдм рдЗрд╢реНр? рдХрд╛ рдПрд╣рд╕рд╛рд?рдЙрдиреНрд╣реЗр? рдЖр?рд?рд╡р? рдкрд╛рд?рд╣рдорд╛рд░ре?рд╕рд╛рд░рд╛ рджрд┐рд?рд░р?рддр? рд░рд╣ре?рд╣рдо рднр? рдирд┐рдХрд▓ре?рдЦр?рджр?рд░р?ре?рдЗрддрдир? рдпрд╛рд░р? рдХрд┐ рдУр? рдХрд░ рдХр?рд? рдЖр?рдЦр?рд?рдмр?рд?рдХрд░рдХр? рд╕р?рддр? рд░рд╣реЗред**?М║\n\n**??Hua jab ishq ka ehsaas unhe akar wo pass humare sara din rate rahe, hum bhi nikale khudgarj itne yaro ki ood kar kafan ankhe band krke sote rhe.??** ",
+           " ?М║**рджрд┐рд?рдХр? рдХр?рдир? рд╕р? рдПр? рдЖрд╡рд╛р?рд?рдЖрддреА рд╣р?рдВред рд╣рдореЗр? рд╣рд░ рдкрд▓ рдЙрдирдХр? рдпрд╛рд?рдЖрддреА рд╣р?рдВред рджрд┐рд?рдкр?рдЫрддрд?рд╣р?рд?рдмрд╛рд?-рдмрд╛рд?рд╣рдорд╕р? рдХр? рдЬрд┐рддрдирд?рд╣рдо рдпрд╛рд?рдХрд░рддр? рд╣р?рд?рдЙрдиреНрд╣реЗр? рдХр?рдпрд╛ рдЙрдиреНрд╣реЗр? рднр? рд╣рдорд╛рд░реА рдпрд╛рд?рдЖрддреА рд╣р?рдВред**?М║\n\n**??Dil Ke Kone Se Ek Aawaj Aati Hai, Hame Har Pal Uaski Yad Aati Hai, Dil Puchhta Hai Bar Bar Hamse Ke, Jitna Ham Yad Karte Hai Uanhe, Kya Uanhe Bhi Hamari Yad Aati Hai,??** ",
+           " ?М║**рдХрднреА рд▓рдлреНр? рднр?рд?рдЬрд╛рдКр? рдХрднреА рдмрд╛рд?рднр?рд?рдЬрд╛рдКр?, рддр?рдЭр? рдЗрд╕ рдХрджрд?рдЪрд╛рд╣р?рд?рдХрд┐ рдЕрдкрдир? рдЬрд╛рд?рднр?рд?рдЬрд╛рдКр?, рдХрднреА рдЙр? рдХр? рддр?рд░р? рдкрд╛рд?рд╕р? рдЬр? рдор?рд?рдЪрд▓ рджр?рд? рдЬрд╛рддр? рд╣р?рд?рдЦр?рд?рдХр? рддр?рд░р? рдкрд╛рд?рднр?рд?рдЬрд╛рдКр?ре?*?М║\n\n**??Kabhi Lafz Bhool Jaaun Kabhi Baat Bhool Jaaun, Tujhe Iss Kadar Chahun Ki Apni Jaat Bhool Jaaun, Kabhi Uthh Ke Tere Paas Se Jo Main Chal Dun, Jaate Huye Khud Ko Tere Paas Bhool Jaaun..??** ",
+           " ?М║**рдЖр?рдирд╛ рджр?рдЦр?рдЧр? рддр? рдор?рд░р? рдпрд╛рд?рдЖр?рдЧр? рд╕рд╛рд?рдЧр?рдЬрд╝рд░р? рд╡р? рдор?рд▓рд╛рдХрд╛рд?рдпрд╛рд?рдЖр?рдЧр? рдкрд▓ рднрд░ рд?рд▓рд┐рд?рд╡р?рд╝р?рд?рдард╣рд?рдЬрд╛рдПр?рд? рдЬрдм рдЖрдкрдХр? рдор?рд░р? рдХр?рд?рдмрд╛рд?рдпрд╛рд?рдЖр?рдЧр?.**?М║\n\n**??Aaina dekhoge to meri yad ayegi sath guzari wo mulakat yad ayegi pal bhar ke waqt thahar jayega jab apko meri koi bat yad ayegi.??** ",
+           " ?М║**рдкр?рдпрд╛рд?рдХрд┐рдпрд╛ рддр? рдЙрдирдХр? рдор?рд╣рдмреНрдмрд?рдир?рд╝рд░ рдЖр? рджрд░реНрдж рд╣р?рд?рддр? рдкрд▓рдХр? рдЙрдирдХр? рднрд░ рдЖр? рджр? рджрд┐рд▓р?рд?рдХр? рдзрдбрд╝р?рд?рдор?рд?рдПр? рдмрд╛рд?рдир?рд╝рд░ рдЖр? рджрд┐рд?рддр? рдЙрдирдХрд╛ рдзрдбрд╝р?рд?рдкрд░ рдЖрд╡рд╛р?рд?рдЗрд╕ рджрд┐рд?рдХр? рдЖр?.**?М║\n\n**??Pyar kiya to unki mohabbat nazar aai dard hua to palke unki bhar aai do dilon ki dhadkan me ek baat nazar aai dil to unka dhadka par awaz dil ki aai.??** ",
+           " ?М║**рдХр? рдЪр?рд╣рд░ре?рд▓р?рдХрд░ рд▓р?рд?рдпрд╣рд╛р? рдЬрд┐рдпрд╛ рдХрд░рддр? рд╣р?рд?рд╣рдо рддр? рдмрд╕ рдПр? рд╣р? рдЪр?рд╣рд░ре?рд╕р? рдкр?рдпрд╛рд?рдХрд░рддр? рд╣р?рд?рдирд╛ рдЫр?рдкрд╛рдпрд╛ рдХрд░ре?рддр?рд?рдЗрд╕ рдЪр?рд╣рд░ре?рдХр?,рдХр?рдпр?рдВр?рд?рд╣рдо рдЗрд╕ре?рджр?рд?рдХр? рд╣р? рдЬрд┐рдпрд╛ рдХрд░рддр? рд╣р?рд?**?М║\n\n**??Kai chehre lekar log yahn jiya karte hai hum to bas ek hi chehre se pyar karte hai na chupaya karo tum is chehre ko kyuki hum ise dekh ke hi jiya karte hai.??** ",
+           " ?М║**рд╕рдмрдХр? bf рдХр? рдЕрдкрдир? gf рд╕р? рдмрд╛рд?рдХрд░рдХр? рдир?рдВрдж рдЖр?рд╛рддреА рд╣р? рдФрд░ рдор?рд░р? рд╡рд╛рд▓р? рдХр? рдор?рдЭрд╕ре?рд▓р?ре?рдмрд┐рдирд╛ рдир?рдВрдж рдирд╣реАрд?рдЖрддреАре?*?М║\n\n**??Sabke bf ko apni gf se baat karke nind aajati hai aur mere wale ko mujhse lade bina nind nhi aati.??** ",
+           " ?М║**рд╕р?реНр?рд?рдкр?рдпрд╛рд?рдХрд╣рд?рдХрд┐рд╕р? рдХр? рдирд╕реАрд?рдор?рд?рд╣р?рддрд╛ рд╣р?. рдПрд╕рд?рдкр?рдпрд╛рд?рдХрд╣рд?рдЗрд╕ рджр?рдирд┐рдпрд╛ рдор?рд?рдХрд┐рд╕р? рдХр? рдирд╕реАрд?рд╣р?рддрд╛ рд╣р?.**?М║\n\n**??Sacha pyar kaha kisi ke nasib me hota hai esa pyar kahan is duniya me kisi ko nasib hota hai.??** " ]
+
+# Command
+    
+
+
+@app.on_message(filters.command(["shayari" ], prefixes=["/", "@", "#"]))
+async def mentionall(client, message):
+    chat_id = message.chat.id
+    if message.chat.type == ChatType.PRIVATE:
+        return await message.reply("???Рб?Рв?Рм ???Ри?Рж?Рж???Рз?? ???Рз?Ре?Р▓ ???Ри?Рл ???Рл?Ри?Ро?Рй?Рм.")
+
+    is_admin = False
+    try:
+        participant = await client.get_chat_member(chat_id, message.from_user.id)
+    except UserNotParticipant:
+        is_admin = False
+    else:
+        if participant.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        ):
+            is_admin = True
+    if not is_admin:
+        return await message.reply("???Ри?Ро ???Рл?? ???Ри?Рн ?????Рж?Рв?Рз ???????Р▓, ???Рз?Ре?Р▓ ?????Рж?Рв?Рз?Рм ?????Рз . ")
+
+    if message.reply_to_message and message.text:
+        return await message.reply("/shayaril  ???Р▓?Рй?? ???Рв?Рд?? ???Рб?Рв?Рм / ?????Рй?Ре?Р▓ ???Рз?Р▓ ?????Рм?Рм?????? ?????Р▒?Рн ???Рв?Рж?? ")
+    elif message.text:
+        mode = "text_on_cmd"
+        msg = message.text
+    elif message.reply_to_message:
+        mode = "text_on_reply"
+        msg = message.reply_to_message
+        if not msg:
+            return await message.reply("/shayari  ???Р▓?Рй?? ???Рв?Рд?? ???Рб?Рв?Рм / ?????Рй?Ре?Р▓ ???Рз?Р▓ ?????Рм?Рм?????? ?????Р▒?Рн ???Рв?Рж?? ...")
+    else:
+        return await message.reply("/shayari  ???Р▓?Рй?? ???Рв?Рд?? ???Рб?Рв?Рм / ?????Рй?Ре?Р▓ ???Рз?Р▓ ?????Рм?Рм?????? ?????Р▒?Рн ???Рв?Рж?? ..")
+    if chat_id in spam_chats:
+        return await message.reply("???Ре?????Рм?? ???Рн ???Рв?Рл?Рм?Рн ???Рн?Ри?Рй ???Ро?Рз?Рз?Рв?Рз?? ???Рл?Ри?????Рм?Рм ...")
+    spam_chats.append(chat_id)
+    usrnum = 0
+    usrtxt = ""
+    async for usr in client.get_chat_members(chat_id):
+        if not chat_id in spam_chats:
+            break
+        if usr.user.is_bot:
+            continue
+        usrnum += 1
+        usrtxt += "<a href='tg://user?id={}'>{}</a>".format(usr.user.id, usr.user.first_name)
+
+        if usrnum == 1:
+            if mode == "text_on_cmd":
+                txt = f"{usrtxt} {random.choice(SHAYRI)}"
+                await client.send_message(chat_id, txt)
+            elif mode == "text_on_reply":
+                await msg.reply(f"[{random.choice(EMOJI)}](tg://user?id={usr.user.id})")
+            await asyncio.sleep(4)
+            usrnum = 0
+            usrtxt = ""
+    try:
+        spam_chats.remove(chat_id)
+    except:
+        pass
+
+
+#
+
+@app.on_message(filters.command(["cancelshayari", "shayarioff"]))
+async def cancel_spam(client, message):
+    if not message.chat.id in spam_chats:
+        return await message.reply("???Ро?Рл?Рл???Рз?Рн?Ре?Р▓ ??'?Рж ???Ри?Рн ..")
+    is_admin = False
+    try:
+        participant = await client.get_chat_member(message.chat.id, message.from_user.id)
+    except UserNotParticipant:
+        is_admin = False
+    else:
+        if participant.status in (
+            ChatMemberStatus.ADMINISTRATOR,
+            ChatMemberStatus.OWNER
+        ):
+            is_admin = True
+    if not is_admin:
+        return await message.reply("???Ри?Ро ???Рл?? ???Ри?Рн ?????Рж?Рв?Рз ???????Р▓, ???Рз?Ре?Р▓ ?????Рж?Рв?Рз?Рм ?????Рз ?????? ?????Рж?????Рл?Рм.")
+    else:
+        try:
+            spam_chats.remove(message.chat.id)
+        except:
+            pass
+        return await message.reply("?Сг ?????????????? ?????????????? ?????????????? ?????????????? ??")
